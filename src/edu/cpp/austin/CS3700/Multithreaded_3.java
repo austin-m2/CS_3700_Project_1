@@ -4,15 +4,14 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.PriorityQueue;
-import java.util.concurrent.Callable;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.ThreadPoolExecutor;
 
-public class Multithreaded_1 {
+public class Multithreaded_3 {
+
+    public static int fileLengthInChars = 0;
+    public static Character[] fileCharArray;
 
     //44.6 KB
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException, InterruptedException {
         File file = new File("constitution.txt");
         BufferedReader br = new BufferedReader(new FileReader(file));
 
@@ -25,12 +24,19 @@ public class Multithreaded_1 {
 
     private static int[] findFrequency(BufferedReader br) throws IOException {
         //find frequency of each character
+        ArrayList<Character> chars = new ArrayList<>();
         int[] frequency = new int[256];
         int currentChar = br.read();
         while (currentChar != -1) {
+            chars.add((char) currentChar);
             frequency[currentChar]++;
             currentChar = br.read();
+            fileLengthInChars++;
         }
+
+        fileCharArray = new Character[fileLengthInChars];
+        fileCharArray = chars.toArray(fileCharArray);
+
         return frequency;
     }
 
@@ -57,7 +63,9 @@ public class Multithreaded_1 {
 
     //encodes the file and writes it to output.dat
     //returns the total number of characters in the file
-    private static int encode(BufferedReader br, File file) throws IOException {
+    private static void encode(BufferedReader br, File file) throws IOException, InterruptedException {
+        long startTime = System.currentTimeMillis();
+
         int[] frequency = findFrequency(br);
         Node treeRoot = buildTree(frequency);
 
@@ -68,43 +76,30 @@ public class Multithreaded_1 {
         //reset buffered reader
         br = new BufferedReader(new FileReader(file));
 
-
-        ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newCachedThreadPool();
-        ArrayList<BitSet> outputBitSetList= new ArrayList<>();
-
-        String currentLine;
-        int outputIndex = 0;
-        while ((currentLine = br.readLine()) != null) {
-            Encoder encoder = new Encoder(currentLine, outputIndex);
-            Future<BitSetPlusLength> outputBitSet = executor.submit(encoder);
-//            outputBitSetList.
-
-        }
+        //this string array will hold the encoded string for each char in the file
+        String[] outputCodeArray = new String[fileLengthInChars];
 
 
 
+        ArrayList<EncoderThread> threads = new ArrayList<>();
 
-        //encode file
-        //BitSet outputBitSet = new BitSet();
-        int bitSetIndex = 0;
-        int currentChar = br.read();
-        while (currentChar != -1) {
-            String code = codeTable[currentChar];
-            for (int i = 0; i < code.length(); i++) {
-                if (code.charAt(i) == '1') {
-          //          outputBitSet.set(bitSetIndex);
-                }
-                bitSetIndex++;
+        int i;
+        for (i = 0; i < fileLengthInChars; i+= 100) {
+            if (i + 100 > fileLengthInChars) {
+                threads.add(new EncoderThread(i, fileLengthInChars, fileCharArray, outputCodeArray, codeTable));
+            } else {
+                threads.add(new EncoderThread(i, i + 100, fileCharArray, outputCodeArray, codeTable));
             }
-            currentChar = br.read();
+            threads.get(threads.size() - 1).start();
         }
 
+        for (int j = 0; j < threads.size(); j++) {
+            threads.get(threads.size() - 1).join();
+        }
 
+        long totalTimeMillis = System.currentTimeMillis() - startTime;
+        System.out.println(totalTimeMillis + " milliseconds");
 
-       // byte[] outputByteArray = outputBitSet.toByteArray();
-        FileOutputStream stream = new FileOutputStream("output.dat");
-        //stream.write(outputByteArray);
-        return bitSetIndex;
     }
 
     private static void buildCodeTable(String[] table, Node node, String code) {
@@ -117,27 +112,23 @@ public class Multithreaded_1 {
     }
 }
 
-class Encoder implements Callable<BitSetPlusLength> {
-    private String line;
-    private int outputIndex;
+/*class EncoderThread extends Thread {
+    int fromIndex, toIndex;
+    Character[] charArray;
+    String[] outputArray, codeTable;
 
-
-    Encoder(String l, int outputIndex) {
-        line = l;
-        this.outputIndex = outputIndex;
+    EncoderThread(int fromIndex, int toIndex, Character[] charArray, String[] outputArray, String[] codeTable) {
+        this.fromIndex = fromIndex;
+        this.toIndex = toIndex;
+        this.charArray = charArray;
+        this.outputArray = outputArray;
+        this.codeTable = codeTable;
     }
 
     @Override
-    public BitSetPlusLength call() throws Exception {
-
-
-
-        return null;
+    public void run() {
+        for (int i = fromIndex; i < toIndex; i++) {
+            outputArray[i] = codeTable[charArray[i]];
+        }
     }
-}
-
-class BitSetPlusLength {
-    public BitSet bitSet;
-    public int numChars;
-    public int outputIndex;
-}
+}*/

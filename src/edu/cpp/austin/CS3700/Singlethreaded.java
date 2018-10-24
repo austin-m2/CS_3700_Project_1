@@ -53,6 +53,9 @@ public class Singlethreaded {
     //encodes the file and writes it to output.dat
     //returns the total number of characters in the file
     private static int encode(BufferedReader br, File file) throws IOException {
+        long startTime = System.currentTimeMillis();
+
+
         int[] frequency = findFrequency(br);
         Node treeRoot = buildTree(frequency);
 
@@ -83,6 +86,10 @@ public class Singlethreaded {
         byte[] outputByteArray = outputBitSet.toByteArray();
         FileOutputStream stream = new FileOutputStream("output.dat");
         stream.write(outputByteArray);
+
+        long totalTimeMillis = System.currentTimeMillis() - startTime;
+        System.out.println(totalTimeMillis + " milliseconds");
+
         return bitSetIndex;
     }
 
