@@ -4,7 +4,7 @@ import java.io.*;
 import java.util.BitSet;
 import java.util.PriorityQueue;
 
-public class Main {
+public class Singlethreaded {
 
     //44.6 KB
     public static void main(String[] args) throws IOException {
@@ -51,7 +51,8 @@ public class Main {
     }
 
     //encodes the file and writes it to output.dat
-    private static void encode(BufferedReader br, File file) throws IOException {
+    //returns the total number of characters in the file
+    private static int encode(BufferedReader br, File file) throws IOException {
         int[] frequency = findFrequency(br);
         Node treeRoot = buildTree(frequency);
 
@@ -82,6 +83,7 @@ public class Main {
         byte[] outputByteArray = outputBitSet.toByteArray();
         FileOutputStream stream = new FileOutputStream("output.dat");
         stream.write(outputByteArray);
+        return bitSetIndex;
     }
 
     private static void buildCodeTable(String[] table, Node node, String code) {
