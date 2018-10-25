@@ -97,26 +97,7 @@ public class Multithreaded_2 {
 
         long totalTimeMillis = System.currentTimeMillis() - startTime;
         System.out.println(totalTimeMillis + " milliseconds");
-
-
-
-
-
-
-        //encode file
-/*        int outputIndex = 0;
-        int currentChar;
-        while ((currentChar = br.read()) != -1) {
-            outputCodeArray[outputIndex] = codeTable[currentChar];
-            outputIndex++;
-        }*/
-
-
-
-/*        byte[] outputByteArray = outputBitSet.toByteArray();
-        FileOutputStream stream = new FileOutputStream("output.dat");
-        stream.write(outputByteArray);
-        return bitSetIndex;*/
+        
     }
 
     private static void buildCodeTable(String[] table, Node node, String code) {

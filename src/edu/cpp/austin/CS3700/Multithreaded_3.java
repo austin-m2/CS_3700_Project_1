@@ -111,24 +111,3 @@ public class Multithreaded_3 {
         }
     }
 }
-
-/*class EncoderThread extends Thread {
-    int fromIndex, toIndex;
-    Character[] charArray;
-    String[] outputArray, codeTable;
-
-    EncoderThread(int fromIndex, int toIndex, Character[] charArray, String[] outputArray, String[] codeTable) {
-        this.fromIndex = fromIndex;
-        this.toIndex = toIndex;
-        this.charArray = charArray;
-        this.outputArray = outputArray;
-        this.codeTable = codeTable;
-    }
-
-    @Override
-    public void run() {
-        for (int i = fromIndex; i < toIndex; i++) {
-            outputArray[i] = codeTable[charArray[i]];
-        }
-    }
-}*/
