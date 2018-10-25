@@ -4,10 +4,7 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.PriorityQueue;
-import java.util.concurrent.Callable;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.*;
 
 public class Multithreaded_1 {
 
@@ -57,7 +54,10 @@ public class Multithreaded_1 {
 
     //encodes the file and writes it to output.dat
     //returns the total number of characters in the file
-    private static int encode(BufferedReader br, File file) throws IOException {
+    private static ArrayList<ArrayList> encode(BufferedReader br, File file) throws IOException {
+        long startTime = System.currentTimeMillis();
+
+
         int[] frequency = findFrequency(br);
         Node treeRoot = buildTree(frequency);
 
@@ -70,41 +70,37 @@ public class Multithreaded_1 {
 
 
         ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newCachedThreadPool();
-        ArrayList<BitSet> outputBitSetList= new ArrayList<>();
+
+        ArrayList<Future<ArrayList<BitSetPlusLength>>> outputList = new ArrayList<>();
 
         String currentLine;
-        int outputIndex = 0;
+
         while ((currentLine = br.readLine()) != null) {
-            Encoder encoder = new Encoder(currentLine, outputIndex);
-            Future<BitSetPlusLength> outputBitSet = executor.submit(encoder);
-//            outputBitSetList.
+            Encoder encoder = new Encoder(currentLine, codeTable);
+            Future<ArrayList<BitSetPlusLength>> oneLineCodes= executor.submit(encoder);
+            outputList.add(oneLineCodes);
 
         }
 
-
-
-
-        //encode file
-        //BitSet outputBitSet = new BitSet();
-        int bitSetIndex = 0;
-        int currentChar = br.read();
-        while (currentChar != -1) {
-            String code = codeTable[currentChar];
-            for (int i = 0; i < code.length(); i++) {
-                if (code.charAt(i) == '1') {
-          //          outputBitSet.set(bitSetIndex);
-                }
-                bitSetIndex++;
+        ArrayList<ArrayList> finalList = new ArrayList<>();
+        for (Future<ArrayList<BitSetPlusLength>> future : outputList) {
+            try {
+                finalList.add(future.get());
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } catch (ExecutionException e) {
+                e.printStackTrace();
             }
-            currentChar = br.read();
         }
 
 
+        long totalTimeMillis = System.currentTimeMillis() - startTime;
+        System.out.println(totalTimeMillis + " milliseconds");
 
-       // byte[] outputByteArray = outputBitSet.toByteArray();
-        FileOutputStream stream = new FileOutputStream("output.dat");
-        //stream.write(outputByteArray);
-        return bitSetIndex;
+        executor.shutdown();
+
+        return finalList;
+
     }
 
     private static void buildCodeTable(String[] table, Node node, String code) {
@@ -117,27 +113,41 @@ public class Multithreaded_1 {
     }
 }
 
-class Encoder implements Callable<BitSetPlusLength> {
+class Encoder implements Callable<ArrayList<BitSetPlusLength>> {
     private String line;
-    private int outputIndex;
+    //private int outputIndex;
+    String[] codeTable;
 
 
-    Encoder(String l, int outputIndex) {
+    Encoder(String l, String[] codeTable) {
         line = l;
-        this.outputIndex = outputIndex;
+        this.codeTable = codeTable;
     }
 
     @Override
-    public BitSetPlusLength call() throws Exception {
+    public ArrayList<BitSetPlusLength> call() throws Exception {
 
+        ArrayList<BitSetPlusLength> bitSetPlusLengthList= new ArrayList<>();
+        int i, j;
+        for (i = 0; i < line.length(); i++) {
+            String code = codeTable[line.charAt(i)];
+            BitSet bitSetCode = new BitSet();
+            for (j = 0; j < code.length(); j++) {
+                if (code.charAt(j) == '1') {
+                    bitSetCode.set(j);
+                }
+            }
+            BitSetPlusLength list = new BitSetPlusLength();
+            list.bitSet = bitSetCode;
+            list.numChars = i;
+            bitSetPlusLengthList.add(list);
+        }
 
-
-        return null;
+        return bitSetPlusLengthList;
     }
 }
 
 class BitSetPlusLength {
     public BitSet bitSet;
     public int numChars;
-    public int outputIndex;
 }
